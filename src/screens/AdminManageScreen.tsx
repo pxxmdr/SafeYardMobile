@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import BackgroundPages from '../components/BackgroundPages';
 import NavBarAdm from '../components/NavBarAdm';
 import { colors } from '../styles/colors';
@@ -16,12 +17,18 @@ type Alugacao = {
 
 export default function AdminManageScreen() {
   const [alugacoes, setAlugacoes] = useState<Alugacao[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadAlugacoes = async () => {
     try {
       const data = await AsyncStorage.getItem('alugacoes');
       if (data) {
-        setAlugacoes(JSON.parse(data));
+        const arr: Alugacao[] = JSON.parse(data);
+
+       
+        setAlugacoes([...arr].reverse());
+      } else {
+        setAlugacoes([]);
       }
     } catch (error) {
       console.error('Erro ao carregar as alugações', error);
@@ -29,11 +36,25 @@ export default function AdminManageScreen() {
   };
 
   useEffect(() => {
-     loadAlugacoes();
-}, []);
+    loadAlugacoes();
+  }, []);
+
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAlugacoes();
+    }, [])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadAlugacoes();
+    setRefreshing(false);
+  }, []);
 
   const renderItem = ({ item }: { item: Alugacao }) => (
     <View style={styles.itemContainer}>
+      <Text style={[styles.itemText, styles.itemId]}>ID: {String(item.id)}</Text>
       <Text style={styles.itemText}>Cliente: {item.nomeCliente}</Text>
       <Text style={styles.itemText}>CPF: {item.cpf}</Text>
       <Text style={styles.itemText}>Placa: {item.placaMoto}</Text>
@@ -46,12 +67,16 @@ export default function AdminManageScreen() {
     <BackgroundPages>
       <NavBarAdm currentPage="Gerenciar" />
       <Text style={styles.title}>Gerenciar Alugações</Text>
+
       <FlatList
         data={alugacoes}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`} 
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma alugação cadastrada ainda.</Text>}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.white} />
+        }
       />
     </BackgroundPages>
   );
@@ -63,7 +88,8 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginVertical: 20,
+    marginTop: 8,
+    marginBottom: 14,
   },
   list: {
     paddingHorizontal: 16,
@@ -80,10 +106,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
   },
+  itemId: {
+    opacity: 0.95,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
   emptyText: {
     color: '#ccc',
     textAlign: 'center',
-    marginTop: 50,
+    marginTop: 40,
     fontSize: 16,
   },
 });

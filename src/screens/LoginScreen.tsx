@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import BackgroundPages from '../components/BackgroundPages';
 import CustomButton from '../components/CustomButton';
-import { colors } from '../styles/colors';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTheme } from '../theme/ThemeProvider';
+import OnOffMode from '../components/OnOffMode';
 
 type RootStackParamList = {
   Login: undefined;
@@ -16,6 +17,8 @@ type RootStackParamList = {
 
 export default function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { theme, toggleTheme } = useTheme();
+
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -32,21 +35,39 @@ export default function LoginScreen() {
 
   return (
     <BackgroundPages>
-      <View style={styles.card}>
-        <Text style={styles.title}>Login</Text>
+      <View style={styles.fabContainer} pointerEvents="box-none">
+        <TouchableOpacity
+          onPress={toggleTheme}
+          activeOpacity={0.85}
+          style={[
+            styles.fab,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.primary,
+            },
+          ]}
+        >
+          <Text style={[styles.fabText, { color: theme.colors.primary }]}>
+            {theme.mode === 'dark' ? 'Claro' : 'Escuro'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Login</Text>
 
         <TextInput
           placeholder="Usuário"
-          placeholderTextColor="#ccc"
-          style={styles.input}
+          placeholderTextColor={theme.colors.textMuted}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={email}
           onChangeText={setEmail}
         />
 
         <TextInput
           placeholder="Senha"
-          placeholderTextColor="#ccc"
-          style={styles.input}
+          placeholderTextColor={theme.colors.textMuted}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           secureTextEntry
           value={senha}
           onChangeText={setSenha}
@@ -54,11 +75,14 @@ export default function LoginScreen() {
 
         <CustomButton title="Entrar" onPress={handleLogin} />
 
-        {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+        {errorMessage ? (
+          <Text style={[styles.error, { color: theme.colors.danger }]}>{errorMessage}</Text>
+        ) : null}
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.registerText}>
-            Não tem conta? <Text style={styles.registerLink}>Cadastre-se</Text>
+          <Text style={[styles.registerText, { color: theme.colors.textMuted }]}>
+            Não tem conta?{' '}
+            <Text style={[styles.registerLink, { color: theme.colors.primary }]}>Cadastre-se</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -67,36 +91,48 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  fabContainer: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 10,
+  },
+  fab: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  fabText: {
+    fontSize: 14,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+
   card: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     padding: 24,
     borderRadius: 12,
     gap: 16,
   },
   title: {
-    color: colors.white,
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 12,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 8,
     padding: 12,
-    color: colors.white,
   },
   registerText: {
-    color: '#ccc',
     fontSize: 14,
     marginTop: 16,
     textAlign: 'center',
   },
   registerLink: {
-    color: colors.primary,
     fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
   error: {
-    color: 'red',
     textAlign: 'center',
     marginTop: 12,
     fontSize: 12,
