@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { colors } from '../styles/colors';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTheme } from '../theme/ThemeProvider';
 
 type RootStackParamList = {
   Login: undefined;
@@ -11,85 +11,109 @@ type RootStackParamList = {
 };
 
 type Props = {
-  currentPage: string;
+  currentPage: 'Visualizar' | 'Perfil';
 };
 
 export default function NavBarClient({ currentPage }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { theme } = useTheme();
 
   return (
-    <>
-      
-      <View style={styles.navbar}>
+    <View style={styles.wrapper}>
+      <View
+        style={[
+          styles.navbar,
+          {
+            backgroundColor:
+              theme.mode === 'dark' ? 'rgba(0,0,0,0.9)' : theme.colors.surface,
+          },
+        ]}
+      >
         <TouchableOpacity
-          style={[styles.navItemContainer, currentPage === 'Visualizar' && styles.activeContainer]}
+          style={[
+            styles.tab,
+            currentPage === 'Visualizar' && { backgroundColor: theme.colors.primary },
+          ]}
           onPress={() => navigation.navigate('VisualizarPatios')}
+          activeOpacity={0.85}
         >
-          <Text style={[styles.navItem, currentPage === 'Visualizar' && styles.activeText]}>
+          <Text
+            style={[
+              styles.tabText,
+              { color: theme.colors.text },
+              currentPage === 'Visualizar' && { color: '#000', fontWeight: 'bold' },
+            ]}
+          >
             Visualizar Pátios
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.navItemContainer, currentPage === 'Perfil' && styles.activeContainer]}
+          style={[
+            styles.tab,
+            currentPage === 'Perfil' && { backgroundColor: theme.colors.primary },
+          ]}
           onPress={() => navigation.navigate('MyProfile')}
+          activeOpacity={0.85}
         >
-          <Text style={[styles.navItem, currentPage === 'Perfil' && styles.activeText]}>
+          <Text
+            style={[
+              styles.tabText,
+              { color: theme.colors.text },
+              currentPage === 'Perfil' && { color: '#000', fontWeight: 'bold' },
+            ]}
+          >
             Meu Perfil
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.logout}>Logout</Text>
+          <Text
+            style={[
+              styles.logout,
+              { color: theme.colors.text, textDecorationColor: theme.colors.text },
+            ]}
+          >
+            Logout
+          </Text>
         </TouchableOpacity>
       </View>
-    </>
+
+      <View style={[styles.underline, { backgroundColor: theme.colors.primary }]} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: -10,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-  },
+  wrapper: { marginTop: 10 },
   navbar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.primary,
-    marginTop: 10,
+    gap: 8,
+    borderRadius: 8,
   },
-  navItemContainer: {
+  underline: {
+    height: 3,
+    marginTop: 8,
+    marginHorizontal: 16,
+    borderRadius: 999,
+  },
+  tab: {
     flex: 1,
     alignItems: 'center',
-  },
-  navItem: {
-    color: colors.white,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  activeContainer: {
-    backgroundColor: colors.primary,
     borderRadius: 20,
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
-  activeText: {
-    color: colors.white,
-    fontWeight: 'bold',
+  tabText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
   logout: {
-    color: colors.white,
+    fontSize: 14,
     textDecorationLine: 'underline',
-    fontSize: 16,
+    fontWeight: '600',
   },
 });

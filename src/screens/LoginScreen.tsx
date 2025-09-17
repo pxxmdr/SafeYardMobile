@@ -35,24 +35,6 @@ export default function LoginScreen() {
 
   return (
     <BackgroundPages>
-      <View style={styles.fabContainer} pointerEvents="box-none">
-        <TouchableOpacity
-          onPress={toggleTheme}
-          activeOpacity={0.85}
-          style={[
-            styles.fab,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-        >
-          <Text style={[styles.fabText, { color: theme.colors.primary }]}>
-            {theme.mode === 'dark' ? 'Claro' : 'Escuro'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.title, { color: theme.colors.text }]}>Login</Text>
 

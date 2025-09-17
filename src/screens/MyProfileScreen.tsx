@@ -1,29 +1,57 @@
-import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
-import BackgroundPages from "../components/BackgroundPages";
-import NavBarClient from "../components/NavBarClient";
-import { colors } from "../styles/colors";
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import BackgroundPages from '../components/BackgroundPages';
+import NavBarClient from '../components/NavBarClient';
+import { useTheme } from '../theme/ThemeProvider';
 
 export default function MyProfileScreen() {
-  const cpf = "123.456.789-00";
-  const placaMoto = "ABC-1234";
-  const dataDevolucao = "25/05/2025";
+  const { theme } = useTheme();
+
+  const cpf = '123.456.789-00';
+  const placaMoto = 'ABC-1234';
+  const dataDevolucao = '25/05/2025';
 
   return (
     <BackgroundPages>
       <NavBarClient currentPage="Perfil" />
-      <View style={styles.container}>
-        <Image
-          source={require("../../assets/NoPhotoProfile.png")}
-          style={styles.avatar}
-          resizeMode="contain"
-        />
-        <Text style={styles.title}>Meu Perfil</Text>
-        <Text style={styles.info}>CPF: {cpf}</Text>
 
-        <Text style={styles.sectionTitle}>Alugação:</Text>
-        <Text style={styles.info}>Placa da Moto: {placaMoto}</Text>
-        <Text style={styles.info}>Data de Devolução: {dataDevolucao}</Text>
+      <View style={styles.container}>
+        <View
+          style={[
+            styles.avatarWrap,
+            {
+              borderColor:
+                theme.mode === 'dark' ? 'transparent' : theme.colors.divider,
+              backgroundColor:
+                theme.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f2f2f2',
+            },
+          ]}
+        >
+          <Image
+            source={require('../../assets/NoPhotoProfile.png')}
+            style={styles.avatar}
+            resizeMode="contain"
+          />
+        </View>
+
+        <Text style={[styles.title, { color: theme.colors.text }]}>
+          Meu Perfil
+        </Text>
+
+        <Text style={[styles.info, { color: theme.colors.textMuted }]}>
+          CPF: {cpf}
+        </Text>
+
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+          Alugação:
+        </Text>
+
+        <Text style={[styles.info, { color: theme.colors.text }]}>
+          Placa da Moto: {placaMoto}
+        </Text>
+        <Text style={[styles.info, { color: theme.colors.text }]}>
+          Data de Devolução: {dataDevolucao}
+        </Text>
       </View>
     </BackgroundPages>
   );
@@ -32,33 +60,38 @@ export default function MyProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "flex-start",
-    alignItems: "center",
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     padding: 24,
-    marginTop: 40,
+    marginTop: 24,
+  },
+  avatarWrap: {
+    width: 132,
+    height: 132,
+    borderRadius: 66,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   avatar: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#ccc",
-    marginBottom: 24,
   },
   title: {
-    color: colors.white,
     fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 24,
+    fontWeight: 'bold',
+    marginTop: 8,
+    marginBottom: 20,
   },
   sectionTitle: {
-    color: colors.white,
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginTop: 24,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   info: {
-    color: "#ccc",
     fontSize: 16,
     marginTop: 8,
   },

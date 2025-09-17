@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import BackgroundPages from '../components/BackgroundPages';
 import NavBarAdm from '../components/NavBarAdm';
-import { colors } from '../styles/colors';
+import { useTheme } from '../theme/ThemeProvider';
 
 type Alugacao = {
   id: string;
@@ -16,6 +16,7 @@ type Alugacao = {
 };
 
 export default function AdminManageScreen() {
+  const { theme } = useTheme();
   const [alugacoes, setAlugacoes] = useState<Alugacao[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -24,8 +25,6 @@ export default function AdminManageScreen() {
       const data = await AsyncStorage.getItem('alugacoes');
       if (data) {
         const arr: Alugacao[] = JSON.parse(data);
-
-       
         setAlugacoes([...arr].reverse());
       } else {
         setAlugacoes([]);
@@ -38,7 +37,6 @@ export default function AdminManageScreen() {
   useEffect(() => {
     loadAlugacoes();
   }, []);
-
 
   useFocusEffect(
     useCallback(() => {
@@ -53,29 +51,48 @@ export default function AdminManageScreen() {
   }, []);
 
   const renderItem = ({ item }: { item: Alugacao }) => (
-    <View style={styles.itemContainer}>
-      <Text style={[styles.itemText, styles.itemId]}>ID: {String(item.id)}</Text>
-      <Text style={styles.itemText}>Cliente: {item.nomeCliente}</Text>
-      <Text style={styles.itemText}>CPF: {item.cpf}</Text>
-      <Text style={styles.itemText}>Placa: {item.placaMoto}</Text>
-      <Text style={styles.itemText}>Retirada: {item.dataRetirada}</Text>
-      <Text style={styles.itemText}>Devolução: {item.dataDevolucao}</Text>
+    <View
+      style={[
+        styles.itemContainer,
+        { backgroundColor: theme.colors.surface, borderColor: theme.colors.divider },
+      ]}
+    >
+      <Text style={[styles.itemId, { color: theme.colors.text }]}>ID: {String(item.id)}</Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>
+        Cliente: {item.nomeCliente}
+      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>CPF: {item.cpf}</Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>Placa: {item.placaMoto}</Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>
+        Retirada: {item.dataRetirada}
+      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>
+        Devolução: {item.dataDevolucao}
+      </Text>
     </View>
   );
 
   return (
     <BackgroundPages>
       <NavBarAdm currentPage="Gerenciar" />
-      <Text style={styles.title}>Gerenciar Alugações</Text>
+      <Text style={[styles.title, { color: theme.colors.text }]}>Gerenciar Alugações</Text>
 
       <FlatList
         data={alugacoes}
-        keyExtractor={(item, index) => `${item.id}-${index}`} 
+        keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma alugação cadastrada ainda.</Text>}
+        ListEmptyComponent={
+          <Text style={{ color: theme.colors.textMuted, textAlign: 'center', marginTop: 40 }}>
+            Nenhuma alugação cadastrada ainda.
+          </Text>
+        }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.white} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.text}
+          />
         }
       />
     </BackgroundPages>
@@ -84,25 +101,23 @@ export default function AdminManageScreen() {
 
 const styles = StyleSheet.create({
   title: {
-    color: colors.white,
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 14,
+    marginTop: 12,
+    marginBottom: 16,
   },
   list: {
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
   itemContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   itemText: {
-    color: colors.white,
     fontSize: 14,
     marginBottom: 4,
   },
@@ -110,11 +125,6 @@ const styles = StyleSheet.create({
     opacity: 0.95,
     fontWeight: '800',
     marginBottom: 8,
-  },
-  emptyText: {
-    color: '#ccc',
-    textAlign: 'center',
-    marginTop: 40,
-    fontSize: 16,
+    fontSize: 14,
   },
 });
