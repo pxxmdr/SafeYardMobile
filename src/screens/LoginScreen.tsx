@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import BackgroundPages from '../components/BackgroundPages';
 import CustomButton from '../components/CustomButton';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeProvider';
 import OnOffMode from '../components/OnOffMode';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { decode as atob } from 'base-64'; 
+
+
+const API_URL = 'http://10.0.2.2:8080';
 
 type RootStackParamList = {
   Login: undefined;
@@ -15,21 +20,156 @@ type RootStackParamList = {
   VisualizarPatios: undefined;
 };
 
+
+
+
+function base64UrlDecode(input: string) {
+  let s = input.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = s.length % 4;
+  if (pad) s += '='.repeat(4 - pad);
+  const decoded = atob(s);
+  try {
+    return decodeURIComponent(
+      decoded
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+  } catch (e) {
+    return decoded;
+  }
+}
+
+
+function decodeJwtPayload<T = any>(token: string): T | null {
+  try {
+    const [, payloadB64] = token.split('.');
+    if (!payloadB64) return null;
+    const json = base64UrlDecode(payloadB64);
+    return JSON.parse(json);
+  } catch (e) {
+    return null;
+  }
+}
+
+
+function extractRolesFromPayload(payload: any): string[] {
+  if (!payload) return [];
+  const roles: string[] = [];
+
+  if (Array.isArray(payload.roles)) roles.push(...payload.roles);
+  if (Array.isArray(payload.authorities)) roles.push(...payload.authorities);
+  if (typeof payload.scope === 'string') roles.push(...payload.scope.split(' '));
+  if (typeof payload.role === 'string') roles.push(payload.role);
+  if (typeof payload.perfil === 'string') roles.push(payload.perfil);
+
+  
+  if (Array.isArray(payload.authorities)) {
+    payload.authorities.forEach((a: any) => {
+      if (a && typeof a === 'object' && a.authority) roles.push(a.authority);
+    });
+  }
+
+  return roles.map(r => String(r).toUpperCase());
+}
+
 export default function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
+  
+  const [email, setEmail] = useState(__DEV__ ? 'admin@safeyard.com' : '');
+  const [senha, setSenha] = useState(__DEV__ ? '123456' : '');
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (email === 'admin' && senha === '123') {
-      navigation.navigate('AdminRegister');
-    } else if (email === 'cliente' && senha === '123') {
-      navigation.navigate('VisualizarPatios');
-    } else {
-      setErrorMessage('Usuário ou senha inválidos!');
+  const isValidEmail = (v: string) => /^\S+@\S+\.\S+$/.test(v);
+
+  const handleLogin = async () => {
+    setErrorMessage('');
+
+  
+    if (!email || !senha) {
+      setErrorMessage('Preencha e-mail e senha.');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setErrorMessage('E-mail inválido.');
+      return;
+    }
+    if (senha.length < 6) {
+      setErrorMessage('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      
+      const bodyCandidates = [
+        { email, password: senha },            
+        { email, senha },                      
+        { username: email, password: senha },  
+      ];
+
+      let token: string | null = null;
+      let lastMsg = '';
+
+      for (const body of bodyCandidates) {
+        const res = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          try {
+            const j = await res.json();
+            lastMsg = j?.message || res.statusText || `HTTP ${res.status}`;
+          } catch (e) {
+            lastMsg = res.statusText || `HTTP ${res.status}`;
+          }
+          
+          continue;
+        }
+        try {
+          const data = await res.json();
+          token = data?.token || data?.access_token || data?.jwt || null;
+          if (!token) lastMsg = 'Token não retornado pela API.';
+          break;
+        } catch (e) {
+          lastMsg = 'Falha ao interpretar resposta do login.';
+        }
+      }
+
+      if (!token) {
+        throw new Error(lastMsg || 'Falha no login.');
+      }
+
+      
+      await AsyncStorage.setItem('@safeyard:token', token);
+
+
+      const payload = decodeJwtPayload(token);
+      const roles = extractRolesFromPayload(payload);
+      const isAdmin = roles.some(r => r.includes('ADMIN'));
+
+      
+      if (isAdmin) {
+        navigation.reset({ index: 0, routes: [{ name: 'AdminManage' }] });
+      } else {
+        navigation.reset({ index: 0, routes: [{ name: 'VisualizarPatios' }] });
+      }
+    } catch (err: any) {
+      const msgRaw = err?.message ?? '';
+      const isNetwork = msgRaw.toLowerCase().includes('network');
+      const msg = isNetwork
+        ? 'Não foi possível conectar à API. Verifique se a API está rodando, o IP/porta e o emulador (10.0.2.2).'
+        : msgRaw || 'Falha no login.';
+      setErrorMessage(msg);
+      Alert.alert('Erro', msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,15 +179,17 @@ export default function LoginScreen() {
         <Text style={[styles.title, { color: theme.colors.text }]}>Login</Text>
 
         <TextInput
-          placeholder="Usuário"
+          placeholder="E-mail (ex.: admin@safeyard.com)"
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={email}
           onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
 
         <TextInput
-          placeholder="Senha"
+          placeholder="Senha (ex.: 123456)"
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           secureTextEntry
@@ -55,7 +197,13 @@ export default function LoginScreen() {
           onChangeText={setSenha}
         />
 
-        <CustomButton title="Entrar" onPress={handleLogin} />
+        <CustomButton
+          title={loading ? 'Entrando...' : 'Entrar'}
+          onPress={() => {
+            if (loading) return;
+            void handleLogin();
+          }}
+        />
 
         {errorMessage ? (
           <Text style={[styles.error, { color: theme.colors.danger }]}>{errorMessage}</Text>

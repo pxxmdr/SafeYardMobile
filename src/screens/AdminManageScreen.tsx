@@ -1,36 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import BackgroundPages from '../components/BackgroundPages';
 import NavBarAdm from '../components/NavBarAdm';
 import { useTheme } from '../theme/ThemeProvider';
-
-type Alugacao = {
-  id: string;
-  cpf: string;
-  nomeCliente: string;
-  placaMoto: string;
-  dataRetirada: string;
-  dataDevolucao: string;
-};
+import { listAlugacoesForm, type AlugacaoCard } from '../services/alugacao';
 
 export default function AdminManageScreen() {
   const { theme } = useTheme();
-  const [alugacoes, setAlugacoes] = useState<Alugacao[]>([]);
+  const [alugacoes, setAlugacoes] = useState<AlugacaoCard[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const loadAlugacoes = async () => {
     try {
-      const data = await AsyncStorage.getItem('alugacoes');
-      if (data) {
-        const arr: Alugacao[] = JSON.parse(data);
-        setAlugacoes([...arr].reverse());
-      } else {
-        setAlugacoes([]);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar as alugações', error);
+      setErrorMsg('');
+      const arr = await listAlugacoesForm();
+      setAlugacoes([...arr].reverse());
+    } catch (e: any) {
+      setErrorMsg(e?.message || 'Erro ao carregar as alugações');
     }
   };
 
@@ -50,7 +38,7 @@ export default function AdminManageScreen() {
     setRefreshing(false);
   }, []);
 
-  const renderItem = ({ item }: { item: Alugacao }) => (
+  const renderItem = ({ item }: { item: AlugacaoCard }) => (
     <View
       style={[
         styles.itemContainer,
@@ -58,17 +46,11 @@ export default function AdminManageScreen() {
       ]}
     >
       <Text style={[styles.itemId, { color: theme.colors.text }]}>ID: {String(item.id)}</Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>
-        Cliente: {item.nomeCliente}
-      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>Cliente: {item.nome}</Text>
       <Text style={[styles.itemText, { color: theme.colors.text }]}>CPF: {item.cpf}</Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>Placa: {item.placaMoto}</Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>
-        Retirada: {item.dataRetirada}
-      </Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>
-        Devolução: {item.dataDevolucao}
-      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>Placa: {item.placa}</Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>Retirada: {item.dataRetirada}</Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>Devolução: {item.dataDevolucao}</Text>
     </View>
   );
 
@@ -76,6 +58,12 @@ export default function AdminManageScreen() {
     <BackgroundPages>
       <NavBarAdm currentPage="Gerenciar" />
       <Text style={[styles.title, { color: theme.colors.text }]}>Gerenciar Alugações</Text>
+
+      {!!errorMsg && (
+        <Text style={{ color: theme.colors.danger, textAlign: 'center', marginBottom: 8 }}>
+          {errorMsg}
+        </Text>
+      )}
 
       <FlatList
         data={alugacoes}
@@ -88,11 +76,7 @@ export default function AdminManageScreen() {
           </Text>
         }
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.text}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.text} />
         }
       />
     </BackgroundPages>

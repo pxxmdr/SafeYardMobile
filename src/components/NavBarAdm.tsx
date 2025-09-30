@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeProvider';
+import { logout as doLogout } from '../services/auth';
 
 type RootStackParamList = {
   Login: undefined;
@@ -10,13 +11,20 @@ type RootStackParamList = {
   AdminManage: undefined;
 };
 
-type Props = {
-  currentPage: 'Cadastro' | 'Gerenciar';
-};
+type Props = { currentPage: 'Cadastro' | 'Gerenciar' };
 
 export default function NavBarAdm({ currentPage }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
+  const [leaving, setLeaving] = useState(false);
+
+  const handleLogout = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    await doLogout();
+    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    setLeaving(false);
+  };
 
   return (
     <View
@@ -29,10 +37,7 @@ export default function NavBarAdm({ currentPage }: Props) {
       ]}
     >
       <TouchableOpacity
-        style={[
-          styles.navItemContainer,
-          currentPage === 'Cadastro' && { backgroundColor: theme.colors.primary },
-        ]}
+        style={[styles.navItemContainer, currentPage === 'Cadastro' && { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('AdminRegister')}
       >
         <Text
@@ -47,10 +52,7 @@ export default function NavBarAdm({ currentPage }: Props) {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[
-          styles.navItemContainer,
-          currentPage === 'Gerenciar' && { backgroundColor: theme.colors.primary },
-        ]}
+        style={[styles.navItemContainer, currentPage === 'Gerenciar' && { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('AdminManage')}
       >
         <Text
@@ -64,10 +66,14 @@ export default function NavBarAdm({ currentPage }: Props) {
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={[styles.logout, { color: theme.colors.text, textDecorationColor: theme.colors.text }]}>
-          Logout
-        </Text>
+      <TouchableOpacity onPress={handleLogout} disabled={leaving}>
+        {leaving ? (
+          <ActivityIndicator />
+        ) : (
+          <Text style={[styles.logout, { color: theme.colors.text, textDecorationColor: theme.colors.text }]}>
+            Logout
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -90,13 +96,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
-  navItem: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  logout: {
-    fontSize: 16,
-    textDecorationLine: 'underline',
-    fontWeight: '600',
-  },
+  navItem: { fontSize: 16, textAlign: 'center' },
+  logout: { fontSize: 16, textDecorationLine: 'underline', fontWeight: '600' },
 });

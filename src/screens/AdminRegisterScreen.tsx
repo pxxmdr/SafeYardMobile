@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, Image } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import BackgroundPages from '../components/BackgroundPages';
 import CustomButton from '../components/CustomButton';
 import NavBarAdm from '../components/NavBarAdm';
 import { useTheme } from '../theme/ThemeProvider';
+import {
+  createAlugacaoFromForm,
+  updateAlugacaoFromForm,
+  deleteAlugacaoForm, 
+} from '../services/alugacao';
+import { useNavigation } from '@react-navigation/native';
 
 export default function AdminRegisterScreen() {
   const { theme } = useTheme();
+  const navigation = useNavigation<any>();
 
   const [id, setId] = useState('');
   const [cpf, setCpf] = useState('');
@@ -18,37 +24,39 @@ export default function AdminRegisterScreen() {
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const clearMessages = () => {
     setErrorMessage('');
     setSuccessMessage('');
   };
 
+  
   const formatCPF = (value: string) =>
-    value.replace(/\D/g, '')
+    value
+      .replace(/\D/g, '')
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
       .substring(0, 14);
 
+  
   const formatPlaca = (value: string) =>
-    value.toUpperCase()
-      .replace(/[^A-Z0-9]/g, '')
-      .replace(/(\w{3})(\w{1,4})/, '$1-$2')
-      .substring(0, 8);
+    value.toUpperCase().replace(/[^A-Z0-9-]/g, '').substring(0, 8);
 
   const formatDate = (value: string) =>
-    value.replace(/\D/g, '')
+    value
+      .replace(/\D/g, '')
       .replace(/(\d{2})(\d)/, '$1/$2')
       .replace(/(\d{2})(\d)/, '$1/$2')
       .substring(0, 10);
 
-  // ===== Validações =====
+  
   const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-  const placaRegex = /^[A-Z]{3}-\d{4}$/;
+  const placaRegex = /^(?:[A-Z]{3}-\d{4}|[A-Z]{3}[A-Z0-9]{4})$/;
   const dataRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
 
-  const validateCommonFields = () => {
+  const validateCamposObrigatorios = () => {
     if (!cpf || !nomeCliente || !placaMoto || !dataRetirada || !dataDevolucao) {
       setErrorMessage('Por favor, preencha todos os campos obrigatórios.');
       return false;
@@ -57,8 +65,8 @@ export default function AdminRegisterScreen() {
       setErrorMessage('CPF inválido. Formato correto: 123.456.789-01');
       return false;
     }
-    if (!placaRegex.test(placaMoto)) {
-      setErrorMessage('Placa inválida. Formato correto: ABC-1234');
+    if (!placaRegex.test(placaMoto.toUpperCase())) {
+      setErrorMessage('Placa inválida. Exemplos válidos: ABC-1234 ou ABC1D23');
       return false;
     }
     if (!dataRegex.test(dataRetirada) || !dataRegex.test(dataDevolucao)) {
@@ -68,69 +76,96 @@ export default function AdminRegisterScreen() {
     return true;
   };
 
-  const saveAlugacao = async () => {
-    const newId = id.trim() !== '' ? id.trim() : Date.now().toString();
-    const newAlugacao = { id: newId, cpf, nomeCliente, placaMoto, dataRetirada, dataDevolucao };
+  
+  const placaNormalizada = () => placaMoto.replace(/-/g, '').toUpperCase();
 
-    const existingData = await AsyncStorage.getItem('alugacoes');
-    const alugacoes = existingData ? JSON.parse(existingData) : [];
-    alugacoes.push(newAlugacao);
-    await AsyncStorage.setItem('alugacoes', JSON.stringify(alugacoes));
-    return newId;
-  };
-
-  const updateAlugacao = async () => {
-    const existingData = await AsyncStorage.getItem('alugacoes');
-    const alugacoes = existingData ? JSON.parse(existingData) : [];
-    const idx = alugacoes.findIndex((a: any) => String(a.id) === String(id));
-    if (idx === -1) throw new Error('ID não encontrado.');
-
-    alugacoes[idx] = { ...alugacoes[idx], cpf, nomeCliente, placaMoto, dataRetirada, dataDevolucao };
-    await AsyncStorage.setItem('alugacoes', JSON.stringify(alugacoes));
-  };
-
-  const removeAlugacao = async () => {
-    const existingData = await AsyncStorage.getItem('alugacoes');
-    const alugacoes = existingData ? JSON.parse(existingData) : [];
-    const filtered = alugacoes.filter((a: any) => String(a.id) !== String(id));
-    if (filtered.length === alugacoes.length) throw new Error('ID não encontrado.');
-
-    await AsyncStorage.setItem('alugacoes', JSON.stringify(filtered));
-  };
-
+  
   const handleRegister = async () => {
     clearMessages();
-    if (!validateCommonFields()) return;
+    if (!validateCamposObrigatorios()) return;
+
     try {
-      const newId = await saveAlugacao();
-      setId(''); setCpf(''); setNomeCliente(''); setPlacaMoto(''); setDataRetirada(''); setDataDevolucao('');
-      setSuccessMessage(`Alugação cadastrada com sucesso! ID: ${newId}`);
-    } catch {
-      setErrorMessage('Erro ao salvar a alugação.');
+      setLoading(true);
+
+      const created = await createAlugacaoFromForm({
+        cpf,
+        nome: nomeCliente,
+        placa: placaNormalizada(),
+        dataRetirada,
+        dataDevolucao,
+      });
+
+      setId('');
+      setCpf('');
+      setNomeCliente('');
+      setPlacaMoto('');
+      setDataRetirada('');
+      setDataDevolucao('');
+
+      setSuccessMessage(`Alugação cadastrada! ID: ${String(created?.id ?? '—')}`);
+
+      setTimeout(() => {
+        navigation.reset({ index: 0, routes: [{ name: 'AdminManage' }] });
+      }, 600);
+    } catch (e: any) {
+      setErrorMessage(e?.message || 'Erro ao salvar a alugação.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUpdate = async () => {
     clearMessages();
-    if (!id.trim()) return setErrorMessage('Informe o ID para atualizar.');
-    if (!validateCommonFields()) return;
+    if (!id) return setErrorMessage('Informe o ID para atualizar.');
+    if (!validateCamposObrigatorios()) return;
+
     try {
-      await updateAlugacao();
-      setSuccessMessage(`Alugação #${id} atualizada com sucesso!`);
+      setLoading(true);
+
+      const updated = await updateAlugacaoFromForm(id, {
+        cpf,
+        nome: nomeCliente,
+        placa: placaNormalizada(),
+        dataRetirada,
+        dataDevolucao,
+      });
+
+      setSuccessMessage(`Alugação #${updated.id ?? id} atualizada!`);
+
+      setTimeout(() => {
+        navigation.reset({ index: 0, routes: [{ name: 'AdminManage' }] });
+      }, 600);
     } catch (e: any) {
       setErrorMessage(e?.message || 'Erro ao atualizar a alugação.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRemove = async () => {
+ 
+  const handleDelete = async () => {
     clearMessages();
-    if (!id.trim()) return setErrorMessage('Informe o ID para remover.');
+    if (!id) return setErrorMessage('Informe o ID para remover.');
+
     try {
-      await removeAlugacao();
-      setSuccessMessage(`Alugação #${id} removida com sucesso!`);
+      setLoading(true);
+      await deleteAlugacaoForm(id);
+      setSuccessMessage(`Alugação #${id} removida.`);
+
       setId('');
+      setCpf('');
+      setNomeCliente('');
+      setPlacaMoto('');
+      setDataRetirada('');
+      setDataDevolucao('');
+
+      setTimeout(() => {
+        navigation.reset({ index: 0, routes: [{ name: 'AdminManage' }] });
+      }, 600);
     } catch (e: any) {
       setErrorMessage(e?.message || 'Erro ao remover a alugação.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -176,11 +211,12 @@ export default function AdminRegisterScreen() {
         />
 
         <TextInput
-          placeholder="Placa da Moto *"
+          placeholder="Placa da Moto * (ex.: ABC-1234 ou ABC1D23)"
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={placaMoto}
           onChangeText={(text) => setPlacaMoto(formatPlaca(text))}
+          autoCapitalize="characters"
         />
 
         <TextInput
@@ -201,31 +237,59 @@ export default function AdminRegisterScreen() {
           keyboardType="numeric"
         />
 
-        <CustomButton title="Cadastrar Alugação" onPress={handleRegister} />
+        <CustomButton
+          title={loading ? 'Salvando...' : 'Cadastrar Alugação'}
+          onPress={() => !loading && handleRegister()}
+        />
 
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
-            <CustomButton title="Atualizar" onPress={handleUpdate} />
+            <CustomButton
+              title={loading ? 'Atualizando...' : 'Atualizar'}
+              onPress={() => !loading && handleUpdate()}
+            />
           </View>
           <View style={{ width: 12 }} />
           <View style={{ flex: 1 }}>
-            <CustomButton title="Remover" onPress={handleRemove} />
+            <CustomButton
+              title={loading ? 'Removendo...' : 'Remover'}
+              onPress={() => !loading && handleDelete()}
+            />
           </View>
         </View>
 
         {!!successMessage && (
-          <Text style={{ color: theme.colors.primary, textAlign: 'center', marginTop: 12, fontSize: 12, fontWeight: '700' }}>
+          <Text
+            style={{
+              color: theme.colors.primary,
+              textAlign: 'center',
+              marginTop: 12,
+              fontSize: 12,
+              fontWeight: '700',
+            }}
+          >
             {successMessage}
           </Text>
         )}
         {!!errorMessage && (
-          <Text style={{ color: theme.colors.danger, textAlign: 'center', marginTop: 12, fontSize: 12 }}>
+          <Text
+            style={{
+              color: theme.colors.danger,
+              textAlign: 'center',
+              marginTop: 12,
+              fontSize: 12,
+            }}
+          >
             {errorMessage}
           </Text>
         )}
 
         <View style={styles.logoContainer}>
-          <Image source={require('../../assets/LogoMottu.png')} style={styles.logo} resizeMode="contain" />
+          <Image
+            source={require('../../assets/LogoMottu.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
       </ScrollView>
     </BackgroundPages>
