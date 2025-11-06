@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import BackgroundPages from '../components/BackgroundPages';
 import CustomButton from '../components/CustomButton';
-import { colors } from '../styles/colors';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { registerUser } from '../services/auth';
+import { useTheme } from '../theme/ThemeProvider';
+import { useTranslation } from 'react-i18next';
 
 type RootStackParamList = {
   Login: undefined;
@@ -14,6 +15,8 @@ type RootStackParamList = {
 
 export default function RegisterScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { theme } = useTheme();
+  const { t } = useTranslation();
 
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
@@ -23,7 +26,6 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
-  
   const formatCPF = (value: string) =>
     value
       .replace(/\D/g, '')
@@ -38,23 +40,22 @@ export default function RegisterScreen() {
   async function handleRegister() {
     setErro('');
 
-   
-    if (!nome.trim()) return setErro('Informe o nome.');
-    if (!cpfRegex.test(cpf)) return setErro('CPF inválido. Formato: 123.456.789-01');
-    if (!emailRegex.test(email)) return setErro('E-mail inválido.');
-    if (!senha || senha.length < 6) return setErro('A senha deve ter pelo menos 6 caracteres.');
-    if (senha !== confirmarSenha) return setErro('As senhas não conferem.');
+    if (!nome.trim()) return setErro(t('errors.nameRequired'));
+    if (!cpfRegex.test(cpf)) return setErro(t('errors.cpfInvalid'));
+    if (!emailRegex.test(email)) return setErro(t('errors.emailInvalid'));
+    if (!senha || senha.length < 6) return setErro(t('errors.passwordMin'));
+    if (senha !== confirmarSenha) return setErro(t('errors.passwordsMismatch'));
 
     try {
       setLoading(true);
       await registerUser({ nome, cpf, email, senha });
 
-      Alert.alert('Sucesso', 'Cadastro realizado! Faça login para continuar.');
+      Alert.alert(t('feedback.successTitle'), t('feedback.registered'));
       navigation.navigate('Login');
     } catch (e: any) {
-      const msg = e?.message ?? 'Erro ao cadastrar.';
+      const msg = e?.message ?? t('errors.registerFailed');
       setErro(msg);
-      Alert.alert('Erro', msg);
+      Alert.alert(t('feedback.error'), msg);
     } finally {
       setLoading(false);
     }
@@ -62,13 +63,13 @@ export default function RegisterScreen() {
 
   return (
     <BackgroundPages>
-      <View style={styles.card}>
-        <Text style={styles.title}>Cadastro</Text>
+      <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.title, { color: theme.colors.text }]}>{t('auth.titleRegister')}</Text>
 
         <TextInput
-          placeholder="Nome"
-          placeholderTextColor="#ccc"
-          style={styles.input}
+          placeholder={t('auth.name')}
+          placeholderTextColor={theme.colors.textMuted}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={nome}
           onChangeText={setNome}
           autoCapitalize="words"
@@ -76,17 +77,17 @@ export default function RegisterScreen() {
 
         <TextInput
           placeholder="CPF"
-          placeholderTextColor="#ccc"
-          style={styles.input}
+          placeholderTextColor={theme.colors.textMuted}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={cpf}
-          onChangeText={(t) => setCpf(formatCPF(t))}
+          onChangeText={(tval) => setCpf(formatCPF(tval))}
           keyboardType="numeric"
         />
 
         <TextInput
-          placeholder="E-mail"
-          placeholderTextColor="#ccc"
-          style={styles.input}
+          placeholder={t('auth.email')}
+          placeholderTextColor={theme.colors.textMuted}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -94,29 +95,31 @@ export default function RegisterScreen() {
         />
 
         <TextInput
-          placeholder="Senha (mín. 6)"
-          placeholderTextColor="#ccc"
-          style={styles.input}
+          placeholder={t('auth.passwordMinHint')}
+          placeholderTextColor={theme.colors.textMuted}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           secureTextEntry
           value={senha}
           onChangeText={setSenha}
         />
 
         <TextInput
-          placeholder="Confirmar senha"
-          placeholderTextColor="#ccc"
-          style={styles.input}
+          placeholder={t('auth.confirmPassword')}
+          placeholderTextColor={theme.colors.textMuted}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           secureTextEntry
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
         />
 
         {!!erro && (
-          <Text style={{ color: '#ff6b6b', textAlign: 'center', fontSize: 12 }}>{erro}</Text>
+          <Text style={{ color: theme.colors.danger, textAlign: 'center', fontSize: 12 }}>
+            {erro}
+          </Text>
         )}
 
         <CustomButton
-          title={loading ? 'Cadastrando...' : 'Cadastrar'}
+          title={loading ? t('actions.registering') : t('actions.register')}
           onPress={() => !loading && handleRegister()}
         />
       </View>
@@ -126,21 +129,17 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     padding: 24,
     borderRadius: 12,
-    gap: 16,
+    gap: 16
   },
   title: {
-    color: colors.white,
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 12
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 8,
-    padding: 12,
-    color: colors.white,
-  },
+    padding: 12
+  }
 });

@@ -7,13 +7,15 @@ import { useTheme } from '../theme/ThemeProvider';
 import {
   createAlugacaoFromForm,
   updateAlugacaoFromForm,
-  deleteAlugacaoForm, 
+  deleteAlugacaoForm,
 } from '../services/alugacao';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminRegisterScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
 
   const [id, setId] = useState('');
   const [cpf, setCpf] = useState('');
@@ -31,7 +33,7 @@ export default function AdminRegisterScreen() {
     setSuccessMessage('');
   };
 
-  
+  // máscaras
   const formatCPF = (value: string) =>
     value
       .replace(/\D/g, '')
@@ -40,7 +42,6 @@ export default function AdminRegisterScreen() {
       .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
       .substring(0, 14);
 
-  
   const formatPlaca = (value: string) =>
     value.toUpperCase().replace(/[^A-Z0-9-]/g, '').substring(0, 8);
 
@@ -51,35 +52,32 @@ export default function AdminRegisterScreen() {
       .replace(/(\d{2})(\d)/, '$1/$2')
       .substring(0, 10);
 
-  
   const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
   const placaRegex = /^(?:[A-Z]{3}-\d{4}|[A-Z]{3}[A-Z0-9]{4})$/;
   const dataRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
 
   const validateCamposObrigatorios = () => {
     if (!cpf || !nomeCliente || !placaMoto || !dataRetirada || !dataDevolucao) {
-      setErrorMessage('Por favor, preencha todos os campos obrigatórios.');
+      setErrorMessage(t('admin.register.requiredFields'));
       return false;
     }
     if (!cpfRegex.test(cpf)) {
-      setErrorMessage('CPF inválido. Formato correto: 123.456.789-01');
+      setErrorMessage(t('errors.cpfInvalid'));
       return false;
     }
     if (!placaRegex.test(placaMoto.toUpperCase())) {
-      setErrorMessage('Placa inválida. Exemplos válidos: ABC-1234 ou ABC1D23');
+      setErrorMessage(t('admin.register.plateInvalid'));
       return false;
     }
     if (!dataRegex.test(dataRetirada) || !dataRegex.test(dataDevolucao)) {
-      setErrorMessage('Data inválida. Formato correto: DD/MM/AAAA');
+      setErrorMessage(t('admin.register.dateInvalid'));
       return false;
     }
     return true;
   };
 
-  
   const placaNormalizada = () => placaMoto.replace(/-/g, '').toUpperCase();
 
-  
   const handleRegister = async () => {
     clearMessages();
     if (!validateCamposObrigatorios()) return;
@@ -102,13 +100,15 @@ export default function AdminRegisterScreen() {
       setDataRetirada('');
       setDataDevolucao('');
 
-      setSuccessMessage(`Alugação cadastrada! ID: ${String(created?.id ?? '—')}`);
+      setSuccessMessage(
+        t('admin.register.createdWithId', { id: String(created?.id ?? '—') })
+      );
 
       setTimeout(() => {
         navigation.reset({ index: 0, routes: [{ name: 'AdminManage' }] });
       }, 600);
     } catch (e: any) {
-      setErrorMessage(e?.message || 'Erro ao salvar a alugação.');
+      setErrorMessage(e?.message || t('admin.register.saveError'));
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function AdminRegisterScreen() {
 
   const handleUpdate = async () => {
     clearMessages();
-    if (!id) return setErrorMessage('Informe o ID para atualizar.');
+    if (!id) return setErrorMessage(t('admin.register.idRequiredUpdate'));
     if (!validateCamposObrigatorios()) return;
 
     try {
@@ -130,27 +130,28 @@ export default function AdminRegisterScreen() {
         dataDevolucao,
       });
 
-      setSuccessMessage(`Alugação #${updated.id ?? id} atualizada!`);
+      setSuccessMessage(
+        t('admin.register.updated', { id: String(updated?.id ?? id) })
+      );
 
       setTimeout(() => {
         navigation.reset({ index: 0, routes: [{ name: 'AdminManage' }] });
       }, 600);
     } catch (e: any) {
-      setErrorMessage(e?.message || 'Erro ao atualizar a alugação.');
+      setErrorMessage(e?.message || t('admin.register.updateError'));
     } finally {
       setLoading(false);
     }
   };
 
- 
   const handleDelete = async () => {
     clearMessages();
-    if (!id) return setErrorMessage('Informe o ID para remover.');
+    if (!id) return setErrorMessage(t('admin.register.idRequiredDelete'));
 
     try {
       setLoading(true);
       await deleteAlugacaoForm(id);
-      setSuccessMessage(`Alugação #${id} removida.`);
+      setSuccessMessage(t('admin.register.removed', { id }));
 
       setId('');
       setCpf('');
@@ -163,7 +164,7 @@ export default function AdminRegisterScreen() {
         navigation.reset({ index: 0, routes: [{ name: 'AdminManage' }] });
       }, 600);
     } catch (e: any) {
-      setErrorMessage(e?.message || 'Erro ao remover a alugação.');
+      setErrorMessage(e?.message || t('admin.register.removeError'));
     } finally {
       setLoading(false);
     }
@@ -181,11 +182,11 @@ export default function AdminRegisterScreen() {
         ]}
       >
         <Text style={[styles.title, { color: theme.colors.text }]}>
-          Cadastrar / Gerenciar Alugação
+          {t('admin.register.title')}
         </Text>
 
         <TextInput
-          placeholder="ID (Somente para Atualizar/Deletar)"
+          placeholder={t('admin.register.idPlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={id}
@@ -194,7 +195,7 @@ export default function AdminRegisterScreen() {
         />
 
         <TextInput
-          placeholder="CPF do Cliente *"
+          placeholder={t('admin.register.cpfPlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={cpf}
@@ -203,7 +204,7 @@ export default function AdminRegisterScreen() {
         />
 
         <TextInput
-          placeholder="Nome do Cliente *"
+          placeholder={t('admin.register.namePlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={nomeCliente}
@@ -211,7 +212,7 @@ export default function AdminRegisterScreen() {
         />
 
         <TextInput
-          placeholder="Placa da Moto * (ex.: ABC-1234 ou ABC1D23)"
+          placeholder={t('admin.register.platePlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={placaMoto}
@@ -220,7 +221,7 @@ export default function AdminRegisterScreen() {
         />
 
         <TextInput
-          placeholder="Data de Retirada (DD/MM/AAAA) *"
+          placeholder={t('admin.register.pickupPlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={dataRetirada}
@@ -229,7 +230,7 @@ export default function AdminRegisterScreen() {
         />
 
         <TextInput
-          placeholder="Data de Devolução (DD/MM/AAAA) *"
+          placeholder={t('admin.register.returnPlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={dataDevolucao}
@@ -238,21 +239,21 @@ export default function AdminRegisterScreen() {
         />
 
         <CustomButton
-          title={loading ? 'Salvando...' : 'Cadastrar Alugação'}
+          title={loading ? t('actions.saving') : t('admin.register.create')}
           onPress={() => !loading && handleRegister()}
         />
 
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
             <CustomButton
-              title={loading ? 'Atualizando...' : 'Atualizar'}
+              title={loading ? t('actions.updating') : t('actions.update')}
               onPress={() => !loading && handleUpdate()}
             />
           </View>
           <View style={{ width: 12 }} />
           <View style={{ flex: 1 }}>
             <CustomButton
-              title={loading ? 'Removendo...' : 'Remover'}
+              title={loading ? t('actions.removing') : t('actions.remove')}
               onPress={() => !loading && handleDelete()}
             />
           </View>

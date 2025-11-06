@@ -5,10 +5,9 @@ import CustomButton from '../components/CustomButton';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeProvider';
-import OnOffMode from '../components/OnOffMode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { decode as atob } from 'base-64'; 
-
+import { decode as atob } from 'base-64';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://10.0.2.2:8080';
 
@@ -19,9 +18,6 @@ type RootStackParamList = {
   AdminManage: undefined;
   VisualizarPatios: undefined;
 };
-
-
-
 
 function base64UrlDecode(input: string) {
   let s = input.replace(/-/g, '+').replace(/_/g, '/');
@@ -35,11 +31,10 @@ function base64UrlDecode(input: string) {
         .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-  } catch (e) {
+  } catch {
     return decoded;
   }
 }
-
 
 function decodeJwtPayload<T = any>(token: string): T | null {
   try {
@@ -47,11 +42,10 @@ function decodeJwtPayload<T = any>(token: string): T | null {
     if (!payloadB64) return null;
     const json = base64UrlDecode(payloadB64);
     return JSON.parse(json);
-  } catch (e) {
+  } catch {
     return null;
   }
 }
-
 
 function extractRolesFromPayload(payload: any): string[] {
   if (!payload) return [];
@@ -63,7 +57,6 @@ function extractRolesFromPayload(payload: any): string[] {
   if (typeof payload.role === 'string') roles.push(payload.role);
   if (typeof payload.perfil === 'string') roles.push(payload.perfil);
 
-  
   if (Array.isArray(payload.authorities)) {
     payload.authorities.forEach((a: any) => {
       if (a && typeof a === 'object' && a.authority) roles.push(a.authority);
@@ -76,8 +69,8 @@ function extractRolesFromPayload(payload: any): string[] {
 export default function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
-  
   const [email, setEmail] = useState(__DEV__ ? 'admin@safeyard.com' : '');
   const [senha, setSenha] = useState(__DEV__ ? '123456' : '');
   const [errorMessage, setErrorMessage] = useState('');
@@ -88,28 +81,26 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     setErrorMessage('');
 
-  
     if (!email || !senha) {
-      setErrorMessage('Preencha e-mail e senha.');
+      setErrorMessage(t('errors.fillEmailPassword'));
       return;
     }
     if (!isValidEmail(email)) {
-      setErrorMessage('E-mail inválido.');
+      setErrorMessage(t('errors.invalidEmail'));
       return;
     }
     if (senha.length < 6) {
-      setErrorMessage('A senha deve ter pelo menos 6 caracteres.');
+      setErrorMessage(t('errors.passwordMin'));
       return;
     }
 
     try {
       setLoading(true);
 
-      
       const bodyCandidates = [
-        { email, password: senha },            
+        { email, password: senha },           
         { email, senha },                      
-        { username: email, password: senha },  
+        { username: email, password: senha },
       ];
 
       let token: string | null = null;
@@ -126,35 +117,29 @@ export default function LoginScreen() {
           try {
             const j = await res.json();
             lastMsg = j?.message || res.statusText || `HTTP ${res.status}`;
-          } catch (e) {
+          } catch {
             lastMsg = res.statusText || `HTTP ${res.status}`;
           }
-          
           continue;
         }
         try {
           const data = await res.json();
           token = data?.token || data?.access_token || data?.jwt || null;
-          if (!token) lastMsg = 'Token não retornado pela API.';
+          if (!token) lastMsg = t('errors.tokenMissing');
           break;
-        } catch (e) {
-          lastMsg = 'Falha ao interpretar resposta do login.';
+        } catch {
+          lastMsg = t('errors.loginParse');
         }
       }
 
-      if (!token) {
-        throw new Error(lastMsg || 'Falha no login.');
-      }
+      if (!token) throw new Error(lastMsg || t('errors.loginFailed'));
 
-      
       await AsyncStorage.setItem('@safeyard:token', token);
-
 
       const payload = decodeJwtPayload(token);
       const roles = extractRolesFromPayload(payload);
       const isAdmin = roles.some(r => r.includes('ADMIN'));
 
-      
       if (isAdmin) {
         navigation.reset({ index: 0, routes: [{ name: 'AdminManage' }] });
       } else {
@@ -163,11 +148,9 @@ export default function LoginScreen() {
     } catch (err: any) {
       const msgRaw = err?.message ?? '';
       const isNetwork = msgRaw.toLowerCase().includes('network');
-      const msg = isNetwork
-        ? 'Não foi possível conectar à API. Verifique se a API está rodando, o IP/porta e o emulador (10.0.2.2).'
-        : msgRaw || 'Falha no login.';
+      const msg = isNetwork ? t('errors.network') : (msgRaw || t('errors.loginFailed'));
       setErrorMessage(msg);
-      Alert.alert('Erro', msg);
+      Alert.alert(t('feedback.error'), msg);
     } finally {
       setLoading(false);
     }
@@ -176,10 +159,10 @@ export default function LoginScreen() {
   return (
     <BackgroundPages>
       <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Login</Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>{t('auth.titleLogin')}</Text>
 
         <TextInput
-          placeholder="E-mail (ex.: admin@safeyard.com)"
+          placeholder={t('auth.emailPlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           value={email}
@@ -189,7 +172,7 @@ export default function LoginScreen() {
         />
 
         <TextInput
-          placeholder="Senha (ex.: 123456)"
+          placeholder={t('auth.passwordPlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           style={[styles.input, { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.text }]}
           secureTextEntry
@@ -198,7 +181,7 @@ export default function LoginScreen() {
         />
 
         <CustomButton
-          title={loading ? 'Entrando...' : 'Entrar'}
+          title={loading ? t('actions.loggingIn') : t('actions.login')}
           onPress={() => {
             if (loading) return;
             void handleLogin();
@@ -211,8 +194,8 @@ export default function LoginScreen() {
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
           <Text style={[styles.registerText, { color: theme.colors.textMuted }]}>
-            Não tem conta?{' '}
-            <Text style={[styles.registerLink, { color: theme.colors.primary }]}>Cadastre-se</Text>
+            {t('auth.noAccount')}{' '}
+            <Text style={[styles.registerLink, { color: theme.colors.primary }]}>{t('auth.signUp')}</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -221,24 +204,6 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  fabContainer: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    zIndex: 10,
-  },
-  fab: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  fabText: {
-    fontSize: 14,
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-  },
-
   card: {
     padding: 24,
     borderRadius: 12,

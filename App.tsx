@@ -5,7 +5,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import OnOffMode from './src/components/OnOffMode';
+import LanguageToggle from './src/components/LanguageToggle';
 
+// TELAS
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import AdminRegisterScreen from './src/screens/AdminRegisterScreen';
@@ -14,7 +16,20 @@ import VisualizarPatiosScreen from './src/screens/VizualizarPatiosScreen';
 import DevolucaoScreen from './src/screens/DevolucaoScreen';
 import MyProfileScreen from './src/screens/MyProfileScreen';
 
-const Stack = createNativeStackNavigator();
+// i18n Provider
+import { LanguageProvider } from './src/context/LanguageProvider';
+
+export type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  AdminRegister: undefined;
+  AdminManage: undefined;
+  VisualizarPatios: undefined;
+  Devolucao: undefined;
+  MyProfile: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppInner() {
   const { theme } = useTheme();
@@ -45,7 +60,12 @@ function AppInner() {
           <Stack.Screen name="MyProfile" component={MyProfileScreen} />
         </Stack.Navigator>
       </NavigationContainer>
-      <OnOffMode width={64} style={styles.toggle} />
+
+      {/* FABs fixos: seletor de idioma + tema */}
+      <View style={styles.fabRow}>
+        <LanguageToggle />
+        <OnOffMode width={64} />
+      </View>
     </View>
   );
 }
@@ -53,17 +73,21 @@ function AppInner() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppInner />
+      <LanguageProvider>
+        <AppInner />
+      </LanguageProvider>
     </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  toggle: {
+  fabRow: {
     position: 'absolute',
     right: 16,
     bottom: 16,
-  
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
 });

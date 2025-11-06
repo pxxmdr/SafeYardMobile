@@ -5,9 +5,12 @@ import BackgroundPages from '../components/BackgroundPages';
 import NavBarAdm from '../components/NavBarAdm';
 import { useTheme } from '../theme/ThemeProvider';
 import { listAlugacoesForm, type AlugacaoCard } from '../services/alugacao';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminManageScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
+
   const [alugacoes, setAlugacoes] = useState<AlugacaoCard[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -18,17 +21,17 @@ export default function AdminManageScreen() {
       const arr = await listAlugacoesForm();
       setAlugacoes([...arr].reverse());
     } catch (e: any) {
-      setErrorMsg(e?.message || 'Erro ao carregar as alugações');
+      setErrorMsg(e?.message || t('admin.manage.loadError'));
     }
   };
 
   useEffect(() => {
-    loadAlugacoes();
+    void loadAlugacoes();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadAlugacoes();
+      void loadAlugacoes();
     }, [])
   );
 
@@ -45,19 +48,31 @@ export default function AdminManageScreen() {
         { backgroundColor: theme.colors.surface, borderColor: theme.colors.divider },
       ]}
     >
-      <Text style={[styles.itemId, { color: theme.colors.text }]}>ID: {String(item.id)}</Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>Cliente: {item.nome}</Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>CPF: {item.cpf}</Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>Placa: {item.placa}</Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>Retirada: {item.dataRetirada}</Text>
-      <Text style={[styles.itemText, { color: theme.colors.text }]}>Devolução: {item.dataDevolucao}</Text>
+      <Text style={[styles.itemId, { color: theme.colors.text }]}>
+        {t('admin.manage.fields.id')}: {String(item.id)}
+      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>
+        {t('admin.manage.fields.client')}: {item.nome}
+      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>
+        {t('forms.cpf')}: {item.cpf}
+      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>
+        {t('forms.plate')}: {item.placa}
+      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>
+        {t('admin.manage.fields.pickup')}: {item.dataRetirada}
+      </Text>
+      <Text style={[styles.itemText, { color: theme.colors.text }]}>
+        {t('admin.manage.fields.return')}: {item.dataDevolucao}
+      </Text>
     </View>
   );
 
   return (
     <BackgroundPages>
       <NavBarAdm currentPage="Gerenciar" />
-      <Text style={[styles.title, { color: theme.colors.text }]}>Gerenciar Alugações</Text>
+      <Text style={[styles.title, { color: theme.colors.text }]}>{t('admin.manage.title')}</Text>
 
       {!!errorMsg && (
         <Text style={{ color: theme.colors.danger, textAlign: 'center', marginBottom: 8 }}>
@@ -67,16 +82,20 @@ export default function AdminManageScreen() {
 
       <FlatList
         data={alugacoes}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <Text style={{ color: theme.colors.textMuted, textAlign: 'center', marginTop: 40 }}>
-            Nenhuma alugação cadastrada ainda.
+            {t('admin.manage.empty')}
           </Text>
         }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.text} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.text}
+          />
         }
       />
     </BackgroundPages>
@@ -89,26 +108,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 12,
-    marginBottom: 16,
+    marginBottom: 16
   },
   list: {
     paddingHorizontal: 16,
-    paddingBottom: 32,
+    paddingBottom: 32
   },
   itemContainer: {
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: StyleSheet.hairlineWidth
   },
   itemText: {
     fontSize: 14,
-    marginBottom: 4,
+    marginBottom: 4
   },
   itemId: {
     opacity: 0.95,
     fontWeight: '800',
     marginBottom: 8,
-    fontSize: 14,
-  },
+    fontSize: 14
+  }
 });

@@ -4,6 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeProvider';
 import { logout as doLogout } from '../services/auth';
+import { useTranslation } from 'react-i18next';
+
 
 type RootStackParamList = {
   Login: undefined;
@@ -17,6 +19,7 @@ export default function NavBarAdm({ currentPage }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
   const [leaving, setLeaving] = useState(false);
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     if (leaving) return;
@@ -36,9 +39,12 @@ export default function NavBarAdm({ currentPage }: Props) {
         },
       ]}
     >
+  
+
       <TouchableOpacity
         style={[styles.navItemContainer, currentPage === 'Cadastro' && { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('AdminRegister')}
+        accessibilityLabel={t('admin.tabs.registerRentals')}
       >
         <Text
           style={[
@@ -47,13 +53,14 @@ export default function NavBarAdm({ currentPage }: Props) {
             currentPage === 'Cadastro' && { color: '#000', fontWeight: 'bold' },
           ]}
         >
-          Cadastro Alugações
+          {t('admin.tabs.registerRentals')}
         </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.navItemContainer, currentPage === 'Gerenciar' && { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('AdminManage')}
+        accessibilityLabel={t('admin.tabs.manageRentals')}
       >
         <Text
           style={[
@@ -62,16 +69,16 @@ export default function NavBarAdm({ currentPage }: Props) {
             currentPage === 'Gerenciar' && { color: '#000', fontWeight: 'bold' },
           ]}
         >
-          Gerenciar Alugações
+          {t('admin.tabs.manageRentals')}
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleLogout} disabled={leaving}>
+      <TouchableOpacity onPress={handleLogout} disabled={leaving} accessibilityLabel={t('actions.logout')}>
         {leaving ? (
           <ActivityIndicator />
         ) : (
           <Text style={[styles.logout, { color: theme.colors.text, textDecorationColor: theme.colors.text }]}>
-            Logout
+            {t('actions.logout')}
           </Text>
         )}
       </TouchableOpacity>

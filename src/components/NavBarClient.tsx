@@ -4,6 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeProvider';
 import { logout as doLogout } from '../services/auth';
+import { useTranslation } from 'react-i18next';
+
 
 type RootStackParamList = {
   Login: undefined;
@@ -17,6 +19,7 @@ export default function NavBarClient({ currentPage }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
   const [leaving, setLeaving] = useState(false);
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     if (leaving) return;
@@ -34,10 +37,13 @@ export default function NavBarClient({ currentPage }: Props) {
           { backgroundColor: theme.mode === 'dark' ? 'rgba(0,0,0,0.9)' : theme.colors.surface },
         ]}
       >
+      
+
         <TouchableOpacity
           style={[styles.tab, currentPage === 'Visualizar' && { backgroundColor: theme.colors.primary }]}
           onPress={() => navigation.navigate('VisualizarPatios')}
           activeOpacity={0.85}
+          accessibilityLabel={t('client.tabs.viewYards')}
         >
           <Text
             style={[
@@ -46,7 +52,7 @@ export default function NavBarClient({ currentPage }: Props) {
               currentPage === 'Visualizar' && { color: '#000', fontWeight: 'bold' },
             ]}
           >
-            Visualizar Pátios
+            {t('client.tabs.viewYards')}
           </Text>
         </TouchableOpacity>
 
@@ -54,6 +60,7 @@ export default function NavBarClient({ currentPage }: Props) {
           style={[styles.tab, currentPage === 'Perfil' && { backgroundColor: theme.colors.primary }]}
           onPress={() => navigation.navigate('MyProfile')}
           activeOpacity={0.85}
+          accessibilityLabel={t('client.tabs.myProfile')}
         >
           <Text
             style={[
@@ -62,11 +69,11 @@ export default function NavBarClient({ currentPage }: Props) {
               currentPage === 'Perfil' && { color: '#000', fontWeight: 'bold' },
             ]}
           >
-            Meu Perfil
+            {t('client.tabs.myProfile')}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleLogout} disabled={leaving}>
+        <TouchableOpacity onPress={handleLogout} disabled={leaving} accessibilityLabel={t('actions.logout')}>
           {leaving ? (
             <ActivityIndicator />
           ) : (
@@ -76,7 +83,7 @@ export default function NavBarClient({ currentPage }: Props) {
                 { color: theme.colors.text, textDecorationColor: theme.colors.text },
               ]}
             >
-              Logout
+              {t('actions.logout')}
             </Text>
           )}
         </TouchableOpacity>

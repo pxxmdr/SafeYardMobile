@@ -1,3 +1,4 @@
+// src/screens/VizualizarPatiosScreen.tsx
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import BackgroundPages from '../components/BackgroundPages';
@@ -5,6 +6,7 @@ import NavBarClient from '../components/NavBarClient';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTranslation } from 'react-i18next';
 
 type RootStackParamList = { Devolucao: { localizacao: string } };
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -18,16 +20,17 @@ type Patio = {
 };
 
 const patios: Patio[] = [
-  { id: '1', nome: 'Butantã',    localizacao: 'Rua Agostinho Cantu, 209',          vagas: 120, imagem: require('../../assets/MottuButanta.png') },
-  { id: '2', nome: 'Limão',      localizacao: 'Av. Prof. Celestino Bourroul, 363', vagas: 340, imagem: require('../../assets/MottuLimao.png') },
-  { id: '3', nome: 'Taboão',     localizacao: 'R. Roberta Simões Souza, 1440',     vagas: 80,  imagem: require('../../assets/MottuTaboao.png') },
-  { id: '4', nome: 'Interlagos', localizacao: 'R. Antônio Mariano, 351',           vagas: 275, imagem: require('../../assets/MottuInterlagos.png') },
-  { id: '5', nome: 'São Bernardo', localizacao: 'Av. Moinho Fabrini, 128',         vagas: 150, imagem: require('../../assets/MottuSBC.png') },
+  { id: '1', nome: 'Butantã',      localizacao: 'Rua Agostinho Cantu, 209',          vagas: 120, imagem: require('../../assets/MottuButanta.png') },
+  { id: '2', nome: 'Limão',        localizacao: 'Av. Prof. Celestino Bourroul, 363', vagas: 340, imagem: require('../../assets/MottuLimao.png') },
+  { id: '3', nome: 'Taboão',       localizacao: 'R. Roberta Simões Souza, 1440',     vagas: 80,  imagem: require('../../assets/MottuTaboao.png') },
+  { id: '4', nome: 'Interlagos',   localizacao: 'R. Antônio Mariano, 351',           vagas: 275, imagem: require('../../assets/MottuInterlagos.png') },
+  { id: '5', nome: 'São Bernardo', localizacao: 'Av. Moinho Fabrini, 128',           vagas: 150, imagem: require('../../assets/MottuSBC.png') },
 ];
 
 export default function VisualizarPatiosScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <BackgroundPages>
@@ -54,8 +57,9 @@ export default function VisualizarPatiosScreen() {
             <Image source={patio.imagem} style={styles.image} />
             <Text style={[styles.title, { color: theme.colors.text }]}>{patio.nome}</Text>
             <Text style={[styles.location, { color: theme.colors.textMuted }]}>{patio.localizacao}</Text>
+
             <Text style={[styles.vagas, { color: theme.colors.primary }]}>
-              Vagas: {patio.vagas}/500
+              {t('client.yards.spots', 'Vagas')}: {patio.vagas}/500
             </Text>
 
             <TouchableOpacity
@@ -63,7 +67,9 @@ export default function VisualizarPatiosScreen() {
               onPress={() => navigation.navigate('Devolucao', { localizacao: patio.localizacao })}
               activeOpacity={0.85}
             >
-              <Text style={styles.buttonText}>Selecionar</Text>
+              <Text style={[styles.buttonText, { color: theme.colors.onPrimary }]}>
+                {t('client.yards.select', 'Selecionar')}
+              </Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -113,7 +119,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    color: '#fff',
     fontWeight: 'bold',
   },
 });

@@ -7,6 +7,7 @@ export const DARK_PALETTE = {
   text: "#FFFFFF",
   textMuted: "#CCCCCC",
   primary: "#00B131",
+  onPrimary: "#FFFFFF", // ✅ adicionado
   danger: "#FF4D4D",
   divider: "#1f1f1f",
 };
@@ -18,6 +19,7 @@ export const LIGHT_PALETTE = {
   text: "#111111",
   textMuted: "#5A5A5A",
   primary: "#00B131",
+  onPrimary: "#FFFFFF", // ✅ adicionado
   danger: "#D62828",
   divider: "#E6E6E6",
 };

@@ -1,0 +1,127 @@
+{
+  "appName": "SafeYard",
+  "lang": {
+    "current": "Idioma",
+    "pt": "Português",
+    "es": "Espanhol"
+  },
+  "actions": {
+    "login": "Entrar",
+    "loggingIn": "Entrando...",
+    "logout": "Sair",
+    "register": "Cadastrar",
+    "registering": "Cadastrando...",
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "update": "Atualizar",
+    "updating": "Atualizando...",
+    "remove": "Remover",
+    "removing": "Removendo..."
+  },
+  "auth": {
+    "titleLogin": "Login",
+    "titleRegister": "Cadastro",
+    "user": "Usuário",
+    "password": "Senha",
+    "emailPlaceholder": "E-mail (ex.: admin@safeyard.com)",
+    "passwordPlaceholder": "Senha (ex.: 123456)",
+    "noAccount": "Não tem conta?",
+    "signUp": "Cadastre-se",
+    "name": "Nome",
+    "email": "E-mail",
+    "confirmPassword": "Confirmar senha",
+    "passwordMinHint": "Senha (mín. 6)"
+  },
+  "forms": {
+    "cpf": "CPF",
+    "plate": "Placa da Moto",
+    "location": "Localização"
+  },
+  "admin": {
+    "registerRental": "Cadastro de Alugações",
+    "tabs": {
+      "registerRentals": "Cadastro de Alugações",
+      "manageRentals": "Gerenciar Alugações"
+    },
+    "register": {
+      "title": "Cadastrar / Gerenciar Alugação",
+      "idPlaceholder": "ID (Somente para Atualizar/Deletar)",
+      "cpfPlaceholder": "CPF do Cliente *",
+      "namePlaceholder": "Nome do Cliente *",
+      "platePlaceholder": "Placa da Moto * (ex.: ABC-1234 ou ABC1D23)",
+      "pickupPlaceholder": "Data de Retirada (DD/MM/AAAA) *",
+      "returnPlaceholder": "Data de Devolução (DD/MM/AAAA) *",
+      "requiredFields": "Por favor, preencha todos os campos obrigatórios.",
+      "plateInvalid": "Placa inválida. Exemplos válidos: ABC-1234 ou ABC1D23",
+      "dateInvalid": "Data inválida. Formato correto: DD/MM/AAAA",
+      "idRequiredUpdate": "Informe o ID para atualizar.",
+      "idRequiredDelete": "Informe o ID para remover.",
+      "create": "Cadastrar Alugação",
+      "createdWithId": "Alugação cadastrada! ID: {{id}}",
+      "updated": "Alugação #{{id}} atualizada!",
+      "removed": "Alugação #{{id}} removida.",
+      "saveError": "Erro ao salvar a alugação.",
+      "updateError": "Erro ao atualizar a alugação.",
+      "removeError": "Erro ao remover a alugação."
+    },
+    "manage": {
+      "title": "Gerenciar Alugações",
+      "empty": "Nenhuma alugação cadastrada ainda.",
+      "loadError": "Erro ao carregar as alugações",
+      "fields": {
+        "id": "ID",
+        "client": "Cliente",
+        "pickup": "Retirada",
+        "return": "Devolução"
+      }
+    }
+  },
+  "client": {
+    "myProfile": "Meu Perfil",
+    "tabs": {
+      "viewYards": "Visualizar Pátios",
+      "myProfile": "Meu Perfil"
+    },
+    "yards": {
+      "spots": "Vagas",
+      "select": "Selecionar"
+    },
+    "return": {
+      "title": "Devolver Moto",
+      "locationLabel": "Localização de Devolução:",
+      "confirm": "Confirmar Devolução",
+      "required": "Por favor, preencha todos os campos.",
+      "plateInvalid": "Placa inválida. Exemplos válidos: ABC-1234 ou ABC1D23",
+      "successTitle": "Devolução confirmada",
+      "success": "Moto {{plate}} será devolvida em: {{place}}",
+      "unknownPlace": "Local não informado"
+    },
+    "profile": {
+      "loadError": "Falha ao carregar perfil.",
+      "name": "Nome",
+      "rental": "Alugação",
+      "plate": "Placa da Moto",
+      "returnDate": "Data de Devolução"
+    }
+  },
+  "feedback": {
+    "success": "Operação realizada com sucesso!",
+    "error": "Erro",
+    "successTitle": "Sucesso",
+    "registered": "Cadastro realizado! Faça login para continuar."
+  },
+  "errors": {
+    "fillEmailPassword": "Preencha e-mail e senha.",
+    "invalidEmail": "E-mail inválido.",
+    "passwordMin": "A senha deve ter pelo menos 6 caracteres.",
+    "tokenMissing": "Token não retornado pela API.",
+    "loginParse": "Falha ao interpretar resposta do login.",
+    "loginFailed": "Falha no login.",
+    "network": "Não foi possível conectar à API. Verifique se a API está rodando, o IP/porta e o emulador (10.0.2.2).",
+    "nameRequired": "Informe o nome.",
+    "cpfInvalid": "CPF inválido. Formato: 123.456.789-01",
+    "emailInvalid": "E-mail inválido.",
+    "passwordsMismatch": "As senhas não conferem.",
+    "registerFailed": "Erro ao cadastrar."
+  }
+}

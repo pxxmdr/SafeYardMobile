@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import BackgroundPages from '../components/BackgroundPages';
 import NavBarClient from '../components/NavBarClient';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTranslation } from 'react-i18next';
 import { getMyProfile, type ClienteProfile } from '../services/profile';
 
 function maskCPF(cpf?: string) {
@@ -27,6 +28,7 @@ function fmtDate(dateIso?: string | null) {
 
 export default function MyProfileScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [data, setData] = useState<ClienteProfile | null>(null);
@@ -40,7 +42,7 @@ export default function MyProfileScreen() {
         const profile = await getMyProfile();
         if (mounted) setData(profile);
       } catch (e: any) {
-        if (mounted) setErr(e?.message || 'Falha ao carregar perfil.');
+        if (mounted) setErr(e?.message || t('client.profile.loadError', 'Falha ao carregar perfil.'));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -58,7 +60,7 @@ export default function MyProfileScreen() {
             styles.avatarWrap,
             {
               borderColor: theme.mode === 'dark' ? 'transparent' : theme.colors.divider,
-              backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f2f2f2',
+              backgroundColor: theme.mode === 'dark' ? theme.colors.surface : '#f2f2f2',
             },
           ]}
         >
@@ -79,26 +81,39 @@ export default function MyProfileScreen() {
               </Text>
             )}
 
-            <Text style={[styles.title, { color: theme.colors.text }]}>Meu Perfil</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>
+              {t('client.myProfile', 'Meu Perfil')}
+            </Text>
 
             <Text style={[styles.info, { color: theme.colors.text }]}>
-              <Text style={{ fontWeight: '700' }}>Nome: </Text>
+              <Text style={{ fontWeight: '700' }}>
+                {t('client.profile.name', 'Nome')}:{" "}
+              </Text>
               {data?.nome ?? '—'}
             </Text>
 
             <Text style={[styles.info, { color: theme.colors.textMuted }]}>
-              <Text style={{ fontWeight: '700', color: theme.colors.text }}>CPF: </Text>
+              <Text style={{ fontWeight: '700', color: theme.colors.text }}>
+                {t('forms.cpf', 'CPF')}:{" "}
+              </Text>
               {maskCPF(data?.cpf)}
             </Text>
 
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Alugação:</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              {t('client.profile.rental', 'Alugação')}:
+            </Text>
 
             <Text style={[styles.info, { color: theme.colors.text }]}>
-              <Text style={{ fontWeight: '700' }}>Placa da Moto: </Text>
+              <Text style={{ fontWeight: '700' }}>
+                {t('client.profile.plate', 'Placa da Moto')}:{" "}
+              </Text>
               {data?.placa ?? '—'}
             </Text>
+
             <Text style={[styles.info, { color: theme.colors.text }]}>
-              <Text style={{ fontWeight: '700' }}>Data de Devolução: </Text>
+              <Text style={{ fontWeight: '700' }}>
+                {t('client.profile.returnDate', 'Data de Devolução')}:{" "}
+              </Text>
               {fmtDate(data?.dataDevolucao)}
             </Text>
           </>
@@ -126,7 +141,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   avatar: { width: 120, height: 120, borderRadius: 60 },
-  title: { fontSize: 28, fontWeight: 'bold', marginTop: 8, marginBottom: 20 },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 24, marginBottom: 10 },
+  title: { fontSize: 28, fontWeight: 'bold', marginTop: 8, marginBottom: 20, textAlign: 'center' },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 24, marginBottom: 10, textAlign: 'center' },
   info: { fontSize: 16, marginTop: 8, textAlign: 'center' },
 });
